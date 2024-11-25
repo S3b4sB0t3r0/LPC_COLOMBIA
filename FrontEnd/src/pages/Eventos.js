@@ -8,10 +8,12 @@ function Eventos() {
   const [paginaActual, setPaginaActual] = useState(1);
   const eventosPorPagina = 6;
 
+  const API_URL = process.env.REACT_APP_BACKEND_URL;
+
   useEffect(() => {
     const cargarEventos = async () => {
       try {
-        const response = await fetch('http://localhost:4000/eventos');
+        const response = await fetch(`${API_URL}/eventos`);
         if (!response.ok) {
           throw new Error('Error al obtener los eventos');
         }
@@ -26,9 +28,9 @@ function Eventos() {
         console.error('Error al cargar los eventos:', error);
       }
     };
-
+    
     cargarEventos();
-  }, []);
+  }, [API_URL]);
 
   const abrirModal = (evento) => {
     setEventoSeleccionado(evento);
@@ -42,7 +44,7 @@ function Eventos() {
     if (eventoSeleccionado) {
       try {
         // Actualizar el estado del evento a no disponible
-        await fetch(`http://localhost:4000/api/eventos/${eventoSeleccionado._id}`, {
+        await fetch(`${API_URL}/api/eventos/${eventoSeleccionado._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

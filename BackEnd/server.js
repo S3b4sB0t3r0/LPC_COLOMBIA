@@ -23,6 +23,13 @@ app.use(express.json());
 const SECRET_KEY = 'tu_clave_secreta_para_JWT'; // Cambia esto por una clave más segura en producción
 
 
+app.use(cors({
+  origin: 'https://lpc-colombia-y6hk.onrender.com/',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+
 // Conexión a MongoDB Atlas
 const mongoURI = process.env.MONGO_URI || "mongodb+srv://logisticacolombianalpc:W0wddLtapyQcAHrR@lpc-colombia.ndyk7.mongodb.net/LPC_COLOMBIA?retryWrites=true&w=majority";
 
