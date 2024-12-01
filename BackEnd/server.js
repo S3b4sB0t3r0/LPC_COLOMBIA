@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const http = require('http');
+const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
 const {
   sendResetEmail,
@@ -24,12 +26,32 @@ const SECRET_KEY = 'tu_clave_secreta_para_JWT'; // Cambia esto por una clave má
 
 
 
-// Configurar CORS
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// Configurar CORS con la URL del frontend desde el archivo .env
 app.use(cors({
-  origin: 'https://lpc-colombia-y6hk.onrender.com', // URL de tu Frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
-  credentials: true, // Permitir envío de cookies si es necesario
+  origin: process.env.FRONTEND_URL, // Usar la URL del frontend desde el .env
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
 }));
+
+// Conexión de WebSocket (socket.io)
+io.on('connection', (socket) => {
+  console.log('Usuario conectado');
+
+  // Escuchar eventos desde el frontend
+  socket.on('mensaje', (data) => {
+    console.log(data); // Maneja el mensaje enviado
+  });
+
+  // Desconexión
+  socket.on('disconnect', () => {
+    console.log('Usuario desconectado');
+  });
+});
+
+
 
 
 
