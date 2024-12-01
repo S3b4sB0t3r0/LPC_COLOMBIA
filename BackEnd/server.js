@@ -23,11 +23,16 @@ app.use(express.json());
 const SECRET_KEY = 'tu_clave_secreta_para_JWT'; // Cambia esto por una clave más segura en producción
 
 
+
+// Configurar CORS
 app.use(cors({
-  origin: 'https://lpc-colombia-y6hk.onrender.com/',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: 'https://lpc-colombia-y6hk.onrender.com', // URL de tu Frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos permitidos
+  credentials: true, // Permitir envío de cookies si es necesario
 }));
+
+
+
 
 
 // Conexión a MongoDB Atlas
