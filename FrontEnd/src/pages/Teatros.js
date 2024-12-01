@@ -54,8 +54,9 @@ function Teatros() {
 
   // Filtrar teatros según la búsqueda
   const teatrosFiltrados = teatros.filter((teatro) =>
-    teatro.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    teatro.nombre && teatro.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
+
 
   const indexOfLastTeatro = paginaActual * teatrosPorPagina;
   const indexOfFirstTeatro = indexOfLastTeatro - teatrosPorPagina;
