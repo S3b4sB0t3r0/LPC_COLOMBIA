@@ -7,6 +7,8 @@ function Teatros() {
   const [teatroSeleccionado, setTeatroSeleccionado] = useState(null);
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
+  const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const teatrosPorPagina = 6;
 
   const API_URL = process.env.REACT_APP_API_URL;
@@ -18,7 +20,8 @@ function Teatros() {
         const response = await axios.get(`${API_URL}/teatros`);
         setTeatros(response.data);
       } catch (error) {
-        console.error('Error al cargar los teatros:', error);
+        setError('Error al cargar los teatros. Inténtalo de nuevo más tarde.');
+        console.error(error);
       }
     };
     cargarTeatros();
@@ -29,17 +32,23 @@ function Teatros() {
   const cerrarModal = () => setTeatroSeleccionado(null);
 
   const handleActualizarTeatro = async (datosActualizados) => {
-    if (teatroSeleccionado) {
-      try {
-        await axios.put(`${API_URL}/teatros/${teatroSeleccionado._id}`, datosActualizados);
-        const teatrosActualizados = teatros.map((teatro) =>
-          teatro._id === teatroSeleccionado._id ? { ...teatro, ...datosActualizados } : teatro
-        );
-        setTeatros(teatrosActualizados);
-        cerrarModal();
-      } catch (error) {
-        console.error('Error al actualizar el teatro:', error);
-      }
+    if (!datosActualizados.nombre || !datosActualizados.ubicacion || !datosActualizados.capacidad) {
+      setError('Todos los campos son obligatorios.');
+      return;
+    }
+
+    try {
+      await axios.put(`${API_URL}/teatros/${teatroSeleccionado._id}`, datosActualizados);
+      const teatrosActualizados = teatros.map((teatro) =>
+        teatro._id === teatroSeleccionado._id ? { ...teatro, ...datosActualizados } : teatro
+      );
+      setTeatros(teatrosActualizados);
+      cerrarModal();
+      setMensaje('Teatro actualizado correctamente.');
+      setTimeout(() => setMensaje(''), 3000);
+    } catch (error) {
+      setError('Error al actualizar el teatro. Inténtalo de nuevo.');
+      console.error(error);
     }
   };
 
@@ -67,10 +76,19 @@ function Teatros() {
           className="buscador"
         />
       </div>
+      {mensaje && <div className="notification success">{mensaje}</div>}
+      {error && <div className="notification error">{error}</div>}
       <div className="teatros-grid">
         {teatrosActuales.length > 0 ? (
           teatrosActuales.map((teatro) => (
-            <div key={teatro._id} className="teatro-card" onClick={() => abrirModal(teatro)}>
+            <div
+              key={teatro._id}
+              className="teatro-card"
+              onClick={() => abrirModal(teatro)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Editar información del teatro ${teatro.nombre}`}
+            >
               <h3>{teatro.nombre}</h3>
               <p>{teatro.ubicacion}</p>
               <p>{teatro.capacidad} personas</p>
@@ -87,6 +105,7 @@ function Teatros() {
             key={index + 1}
             onClick={() => irANuevaPagina(index + 1)}
             className={`pagination-button ${paginaActual === index + 1 ? 'active' : ''}`}
+            aria-label={`Ir a la página ${index + 1}`}
           >
             {index + 1}
           </button>
@@ -96,7 +115,13 @@ function Teatros() {
       {teatroSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <span className="close-button" onClick={cerrarModal}>
+            <span
+              className="close-button"
+              onClick={cerrarModal}
+              role="button"
+              tabIndex={0}
+              aria-label="Cerrar modal"
+            >
               &times;
             </span>
             <div className="modal-inner">
@@ -105,9 +130,9 @@ function Teatros() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   const datosActualizados = {
-                    nombre: e.target.nombre.value,
-                    ubicacion: e.target.ubicacion.value,
-                    capacidad: e.target.capacidad.value,
+                    nombre: e.target.nombre.value.trim(),
+                    ubicacion: e.target.ubicacion.value.trim(),
+                    capacidad: parseInt(e.target.capacidad.value, 10),
                   };
                   handleActualizarTeatro(datosActualizados);
                 }}
