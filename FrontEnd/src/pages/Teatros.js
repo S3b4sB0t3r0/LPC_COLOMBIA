@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import '../styles/Teatros.css';
 
 function Teatros() {
@@ -7,69 +8,57 @@ function Teatros() {
   const [busqueda, setBusqueda] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const teatrosPorPagina = 6;
-  const [usuarioAutenticado, setUsuarioAutenticado] = useState(false);  // Estado para verificar si el usuario está autenticado
 
+  const API_URL = process.env.REACT_APP_API_URL;
+
+  // Cargar teatros desde la base de datos
   useEffect(() => {
-    // Cargar teatros
     const cargarTeatros = async () => {
       try {
-        const response = await fetch('http://localhost:4000/teatros');
-        if (!response.ok) {
-          throw new Error('Error al obtener los teatros');
-        }
-        const data = await response.json();
-        setTeatros(data);
+        const response = await axios.get(`${API_URL}/teatros`);
+        setTeatros(response.data);
       } catch (error) {
         console.error('Error al cargar los teatros:', error);
       }
     };
-
     cargarTeatros();
+  }, [API_URL]);
 
-    // Verificar si el usuario está autenticado (simulación con un estado)
-    const verificarAutenticacion = () => {
-      // Simulación de autenticación. Deberías reemplazarlo con tu lógica real de autenticación.
-      const usuario = localStorage.getItem('usuario'); // Aquí asumimos que si hay un "usuario" en localStorage, el usuario está autenticado
-      setUsuarioAutenticado(!!usuario);  // Si el valor es nulo o vacío, el usuario no está autenticado
-    };
+  const abrirModal = (teatro) => setTeatroSeleccionado(teatro);
 
-    verificarAutenticacion();
-  }, []);
+  const cerrarModal = () => setTeatroSeleccionado(null);
 
-  const abrirModal = (teatro) => {
-    setTeatroSeleccionado(teatro);
+  const handleActualizarTeatro = async (datosActualizados) => {
+    if (teatroSeleccionado) {
+      try {
+        await axios.put(`${API_URL}/teatros/${teatroSeleccionado._id}`, datosActualizados);
+        const teatrosActualizados = teatros.map((teatro) =>
+          teatro._id === teatroSeleccionado._id ? { ...teatro, ...datosActualizados } : teatro
+        );
+        setTeatros(teatrosActualizados);
+        cerrarModal();
+      } catch (error) {
+        console.error('Error al actualizar el teatro:', error);
+      }
+    }
   };
 
-  const cerrarModal = () => {
-    setTeatroSeleccionado(null);
-  };
-
-  // Filtrar teatros por búsqueda
-  const teatrosFiltrados = teatros.filter(teatro =>
-    teatro.titulo.toLowerCase().includes(busqueda.toLowerCase())
+  // Filtrar teatros según la búsqueda
+  const teatrosFiltrados = teatros.filter((teatro) =>
+    teatro.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  // Lógica de paginación
   const indexOfLastTeatro = paginaActual * teatrosPorPagina;
   const indexOfFirstTeatro = indexOfLastTeatro - teatrosPorPagina;
   const teatrosActuales = teatrosFiltrados.slice(indexOfFirstTeatro, indexOfLastTeatro);
   const totalPaginas = Math.ceil(teatrosFiltrados.length / teatrosPorPagina);
 
-  const irANuevaPagina = (numeroPagina) => {
-    setPaginaActual(numeroPagina);
-  };
-
-  const handleReservar = () => {
-    if (teatroSeleccionado) {
-      // Aquí podrías agregar la lógica para la reserva, por ejemplo, redirigir a una página de pago o hacer una solicitud POST
-      alert(`Reserva realizada para el teatro: ${teatroSeleccionado.titulo}`);
-    }
-  };
+  const irANuevaPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   return (
     <div className="teatros-container">
       <div className="header">
-        <h2>Teatros Disponibles</h2>
+        <h2>Gestión de Teatros</h2>
         <input
           type="text"
           placeholder="Buscar teatros..."
@@ -82,8 +71,9 @@ function Teatros() {
         {teatrosActuales.length > 0 ? (
           teatrosActuales.map((teatro) => (
             <div key={teatro._id} className="teatro-card" onClick={() => abrirModal(teatro)}>
-              <img src={teatro.imagen} alt={teatro.titulo} className="teatro-imagen" />
-              <h3>{teatro.titulo}</h3>
+              <h3>{teatro.nombre}</h3>
+              <p>{teatro.ubicacion}</p>
+              <p>{teatro.capacidad} personas</p>
             </div>
           ))
         ) : (
@@ -91,7 +81,6 @@ function Teatros() {
         )}
       </div>
 
-      {/* Controles de paginación */}
       <div className="pagination">
         {Array.from({ length: totalPaginas }, (_, index) => (
           <button
@@ -104,36 +93,39 @@ function Teatros() {
         ))}
       </div>
 
-      {/* Botón de reserva, solo si el usuario está autenticado */}
-      {usuarioAutenticado && teatroSeleccionado && (
-        <div className="reservar-btn-container">
-          <button
-            id="teatros.button.reserva"
-            className="reservar-btn"
-            onClick={handleReservar}
-          >
-            Reservar
-          </button>
-        </div>
-      )}
-
-      {/* Modal */}
       {teatroSeleccionado && (
         <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <span className="close-button" onClick={cerrarModal}>&times;</span>
-            <div className="modal-body">
-              <div className="modal-info">
-                <h2>{teatroSeleccionado.titulo}</h2>
-                <p><strong>Descripción:</strong> {teatroSeleccionado.descripcion}</p>
-                <p><strong>Capacidad:</strong> {teatroSeleccionado.capacidad}</p>
-                <p><strong>Teléfono:</strong> {teatroSeleccionado.telefono}</p>
-                <div>
-                  <strong>Ubicación:</strong>
-                  <div dangerouslySetInnerHTML={{ __html: teatroSeleccionado.mapa }} />
-                </div>
-              </div>
-              <img src={teatroSeleccionado.imagen} alt={teatroSeleccionado.titulo} className="modal-imagen" />
+            <span className="close-button" onClick={cerrarModal}>
+              &times;
+            </span>
+            <div className="modal-inner">
+              <h2>Editar Teatro</h2>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const datosActualizados = {
+                    nombre: e.target.nombre.value,
+                    ubicacion: e.target.ubicacion.value,
+                    capacidad: e.target.capacidad.value,
+                  };
+                  handleActualizarTeatro(datosActualizados);
+                }}
+              >
+                <label>
+                  Nombre:
+                  <input type="text" name="nombre" defaultValue={teatroSeleccionado.nombre} />
+                </label>
+                <label>
+                  Ubicación:
+                  <input type="text" name="ubicacion" defaultValue={teatroSeleccionado.ubicacion} />
+                </label>
+                <label>
+                  Capacidad:
+                  <input type="number" name="capacidad" defaultValue={teatroSeleccionado.capacidad} />
+                </label>
+                <button type="submit">Guardar Cambios</button>
+              </form>
             </div>
           </div>
         </div>

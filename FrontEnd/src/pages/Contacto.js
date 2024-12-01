@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import '../styles/Contacto.css';
 import logo from '../image/logo/9.png'; // Asegúrate de que esta ruta sea correcta
 
@@ -6,7 +7,10 @@ function Contacto() {
   const [error, setError] = useState('');
   const [notification, setNotification] = useState(null);
 
-  const handleSubmit = (e) => {
+  // URL de la API desde el entorno
+  const API_URL = process.env.REACT_APP_API_URL;
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -17,41 +21,28 @@ function Contacto() {
       mensaje: formData.get('message'),
     };
 
+    // Validación básica
     if (!data.nombre || !data.email || !data.mensaje) {
       setError('Por favor, completa todos los campos.');
       return;
     }
 
-    fetch('http://localhost:4000/contacto', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          return response.json().then(err => {
-            throw new Error(err.message || 'Error al enviar el mensaje');
-          });
-        }
-      })
-      .then(data => {
-        setNotification(data.message);
+    try {
+      // Enviar el mensaje al servidor
+      const response = await axios.post(`${API_URL}/contacto`, data);
+
+      if (response.status === 200) {
+        setNotification(response.data.message);
         setTimeout(() => {
           setNotification(null);
           window.location.href = '/';
         }, 2000);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        setError(error.message);
-        setTimeout(() => {
-          setError('');
-        }, 2000);
-      });
+      }
+    } catch (error) {
+      console.error('Error al enviar el mensaje:', error);
+      setError(error.response?.data?.message || 'Error al enviar el mensaje.');
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
   return (
