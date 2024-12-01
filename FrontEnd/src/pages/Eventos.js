@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import '../styles/Eventos.css';
 
 function Eventos() {
@@ -8,48 +9,35 @@ function Eventos() {
   const [paginaActual, setPaginaActual] = useState(1);
   const eventosPorPagina = 6;
 
-  const API_URL = process.env.REACT_APP_BACKEND_URL;
+  const API_URL = process.env.REACT_APP_API_URL;
 
+  // Cargar eventos al montar el componente
   useEffect(() => {
     const cargarEventos = async () => {
       try {
-        const response = await fetch(`${API_URL}/eventos`);
-        if (!response.ok) {
-          throw new Error('Error al obtener los eventos');
-        }
-        const data = await response.json();
+        const response = await axios.get(`${API_URL}/eventos`);
         // Asegúrate de que 'estado' es un booleano
-        const eventosConDisponibilidad = data.map(evento => ({
+        const eventosConDisponibilidad = response.data.map(evento => ({
           ...evento,
-          disponible: evento.estado, // Asegúrate de que esto se alinee con tu esquema
+          disponible: evento.estado,
         }));
         setEventos(eventosConDisponibilidad);
       } catch (error) {
         console.error('Error al cargar los eventos:', error);
       }
     };
-    
     cargarEventos();
   }, [API_URL]);
 
-  const abrirModal = (evento) => {
-    setEventoSeleccionado(evento);
-  };
+  const abrirModal = (evento) => setEventoSeleccionado(evento);
 
-  const cerrarModal = () => {
-    setEventoSeleccionado(null);
-  };
+  const cerrarModal = () => setEventoSeleccionado(null);
 
   const handleComprarBoleta = async () => {
     if (eventoSeleccionado) {
       try {
-        // Actualizar el estado del evento a no disponible
-        await fetch(`${API_URL}/api/eventos/${eventoSeleccionado._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ estado: false }), // Cambiar a no disponible
+        await axios.put(`${API_URL}/eventos/${eventoSeleccionado._id}`, {
+          estado: false,
         });
         // Redirigir al sitio de compra de boletos
         window.location.href = 'https://tuboleta.com/';
@@ -59,6 +47,7 @@ function Eventos() {
     }
   };
 
+  // Filtrar eventos según la búsqueda
   const eventosFiltrados = eventos.filter(evento =>
     evento.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
@@ -68,9 +57,7 @@ function Eventos() {
   const eventosActuales = eventosFiltrados.slice(indexOfFirstEvento, indexOfLastEvento);
   const totalPaginas = Math.ceil(eventosFiltrados.length / eventosPorPagina);
 
-  const irANuevaPagina = (numeroPagina) => {
-    setPaginaActual(numeroPagina);
-  };
+  const irANuevaPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   return (
     <div className="eventos-container">
@@ -99,12 +86,11 @@ function Eventos() {
         )}
       </div>
 
-      {/* Controles de paginación */}
       <div className="pagination">
         {Array.from({ length: totalPaginas }, (_, index) => (
-          <button 
-            key={index + 1} 
-            onClick={() => irANuevaPagina(index + 1)} 
+          <button
+            key={index + 1}
+            onClick={() => irANuevaPagina(index + 1)}
             className={`pagination-button ${paginaActual === index + 1 ? 'active' : ''}`}
           >
             {index + 1}
