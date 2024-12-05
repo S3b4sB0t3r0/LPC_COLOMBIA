@@ -16,25 +16,6 @@ import RestablecerContraseña from './pages/RestablecerContraseña';
 import ProtectedRoute from './ProtectedPage';
 import ProtectedAdmin from './ProtectedAdmin'; // Importa el nuevo componente
 import Admin from './pages/Admin';
-import { io } from 'socket.io-client';
-const socket = io(process.env.REACT_APP_BACKEND_URL);
-
-
-
-
-// Conexión exitosa
-socket.on('connect', () => {
-  console.log('Conectado al servidor de WebSocket');
-});
-
-// Enviar un mensaje al backend
-socket.emit('mensaje', 'Hola desde el frontend');
-
-// Recibir un mensaje desde el backend
-socket.on('mensaje', (data) => {
-  console.log('Mensaje recibido:', data);
-});
-
 
 function App() {
   return (
