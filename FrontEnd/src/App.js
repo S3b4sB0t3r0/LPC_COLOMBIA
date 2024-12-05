@@ -19,7 +19,7 @@ import Admin from './pages/Admin';
 import { io } from 'socket.io-client';
 const socket = io(process.env.REACT_APP_BACKEND_URL);
 
-// Esto se conectará a la URL configurada en el archivo .env
+
 
 
 // Conexión exitosa
